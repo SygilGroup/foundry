@@ -31,7 +31,7 @@ jobs:
             - name: Compute release name and tag
               id: release_info
               run: |
-                  if [[ $IS_NIGHTLY != "false" ]]; then
+                  if [[ $IS_NIGHTLY == true ]]; then
                     echo $IS_NIGHTLY
                     echo "::set-output name=tag_name::nightly-${GITHUB_SHA}"
                     echo "::set-output name=release_name::Nightly ($(date '+%Y-%m-%d'))"
@@ -45,15 +45,15 @@ jobs:
             # This tag is used for this specific nightly version's release
             # which allows users to roll back. It is also used to build
             # the changelog.
-            # - name: Create build-specific nightly tag
-            #   if: ${{ env.IS_NIGHTLY }}
-            #   uses: actions/github-script@v5
-            #   env:
-            #       TAG_NAME: ${{ steps.release_info.outputs.tag_name }}
-            #   with:
-            #       script: |
-            #           const createTag = require('./.github/scripts/create-tag.js')
-            #           await createTag({ github, context }, process.env.TAG_NAME)
+            - name: Create build-specific nightly tag
+              if: ${{ env.IS_NIGHTLY }}
+              uses: actions/github-script@v5
+              env:
+                  TAG_NAME: ${{ steps.release_info.outputs.tag_name }}
+              with:
+                  script: |
+                      const createTag = require('./.github/scripts/create-tag.js')
+                      await createTag({ github, context }, process.env.TAG_NAME)
 
             # - name: Build changelog
             #   id: build_changelog
