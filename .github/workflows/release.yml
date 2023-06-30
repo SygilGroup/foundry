@@ -4,8 +4,9 @@ on:
     push:
         tags:
             - "v*.*.*"
-    schedule:
-        - cron: "0 0 * * *"
+    # Can comment out the schedule if you don't want nightly releases
+    # schedule:
+    #     - cron: "0 0 * * *"
     workflow_dispatch:
 
 env:
@@ -62,9 +63,10 @@ jobs:
               env:
                   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-    release-docker:
-        name: Release Docker
-        uses: ./.github/workflows/docker-publish.yml
+    # Ignored
+    # release-docker:
+    #     name: Release Docker
+    #     uses: ./.github/workflows/docker-publish.yml
 
     release:
         name: ${{ matrix.job.target }} (${{ matrix.job.os }})
@@ -191,6 +193,7 @@ jobs:
 
             # If this is a nightly release, it also updates the release
             # tagged `nightly` for compatibility with `foundryup`
+            # Not used post V1.
             - name: Update nightly release
               if: ${{ env.IS_NIGHTLY }}
               uses: softprops/action-gh-release@v1
@@ -214,26 +217,28 @@ jobs:
                   update_existing: true
                   filename: .github/RELEASE_FAILURE_ISSUE_TEMPLATE.md
 
-    cleanup:
-        name: Release cleanup
-        runs-on: ubuntu-20.04
-        needs: release
+    # For V1, this is not needed.
+    # Releases should stay where they are.
+    # cleanup:
+    #     name: Release cleanup
+    #     runs-on: ubuntu-20.04
+    #     needs: release
 
-        steps:
-            - uses: actions/checkout@v3
+    #     steps:
+    #         - uses: actions/checkout@v3
 
-            # Moves the `nightly` tag to `HEAD`
-            - name: Move nightly tag
-              if: ${{ env.IS_NIGHTLY }}
-              uses: actions/github-script@v5
-              with:
-                  script: |
-                      const moveTag = require('./.github/scripts/move-tag.js')
-                      await moveTag({ github, context }, 'nightly')
+    #         # Moves the `nightly` tag to `HEAD`
+    #         - name: Move nightly tag
+    #           if: ${{ env.IS_NIGHTLY }}
+    #           uses: actions/github-script@v5
+    #           with:
+    #               script: |
+    #                   const moveTag = require('./.github/scripts/move-tag.js')
+    #                   await moveTag({ github, context }, 'nightly')
 
-            - name: Delete old nightlies
-              uses: actions/github-script@v5
-              with:
-                  script: |
-                      const prunePrereleases = require('./.github/scripts/prune-prereleases.js')
-                      await prunePrereleases({github, context})
+    #         - name: Delete old nightlies
+    #           uses: actions/github-script@v5
+    #           with:
+    #               script: |
+    #                   const prunePrereleases = require('./.github/scripts/prune-prereleases.js')
+    #                   await prunePrereleases({github, context})
