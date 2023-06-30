@@ -207,6 +207,19 @@ jobs:
                   files: |
                       ${{ steps.artifacts.outputs.file_name }}
                       ${{ steps.man.outputs.foundry_man }}
+            # If this is a stable release, it also updates the release
+            # tagged `stable` for compatibility with `foundryup`
+            - name: Update stable release
+              if: ${{ env.IS_NIGHTLY == false }}
+              uses: softprops/action-gh-release@v1
+              with:
+                  name: "Stable"
+                  tag_name: "stable"
+                  prerelease: false
+                  body: ${{ needs.prepare.outputs.changelog }}
+                  files: |
+                      ${{ steps.artifacts.outputs.file_name }}
+                      ${{ steps.man.outputs.foundry_man }}
 
             # If any of the steps fail, this will create a high-priority issue
             # to signal so.
