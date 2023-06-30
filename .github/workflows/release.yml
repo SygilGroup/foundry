@@ -43,15 +43,15 @@ jobs:
             # This tag is used for this specific nightly version's release
             # which allows users to roll back. It is also used to build
             # the changelog.
-            - name: Create build-specific nightly tag
-              if: ${{ env.IS_NIGHTLY }}
-              uses: actions/github-script@v5
-              env:
-                  TAG_NAME: ${{ steps.release_info.outputs.tag_name }}
-              with:
-                  script: |
-                      const createTag = require('./.github/scripts/create-tag.js')
-                      await createTag({ github, context }, process.env.TAG_NAME)
+            # - name: Create build-specific nightly tag
+            #   if: ${{ env.IS_NIGHTLY }}
+            #   uses: actions/github-script@v5
+            #   env:
+            #       TAG_NAME: ${{ steps.release_info.outputs.tag_name }}
+            #   with:
+            #       script: |
+            #           const createTag = require('./.github/scripts/create-tag.js')
+            #           await createTag({ github, context }, process.env.TAG_NAME)
 
             - name: Build changelog
               id: build_changelog
@@ -108,23 +108,23 @@ jobs:
 
         steps:
             - uses: actions/checkout@v3
-            - uses: dtolnay/rust-toolchain@stable
-              with:
-                  targets: ${{ matrix.job.target }}
-            - uses: Swatinem/rust-cache@v2
+            # - uses: dtolnay/rust-toolchain@stable
+            #   with:
+            #       targets: ${{ matrix.job.target }}
+            # - uses: Swatinem/rust-cache@v2
 
-            - name: Apple M1 setup
-              if: ${{ matrix.job.target == 'aarch64-apple-darwin' }}
-              run: |
-                  echo "SDKROOT=$(xcrun -sdk macosx --show-sdk-path)" >> $GITHUB_ENV
-                  echo "MACOSX_DEPLOYMENT_TARGET=$(xcrun -sdk macosx --show-sdk-platform-version)" >> $GITHUB_ENV
+            # - name: Apple M1 setup
+            #   if: ${{ matrix.job.target == 'aarch64-apple-darwin' }}
+            #   run: |
+            #       echo "SDKROOT=$(xcrun -sdk macosx --show-sdk-path)" >> $GITHUB_ENV
+            #       echo "MACOSX_DEPLOYMENT_TARGET=$(xcrun -sdk macosx --show-sdk-platform-version)" >> $GITHUB_ENV
 
-            - name: Linux ARM setup
-              if: ${{ matrix.job.target == 'aarch64-unknown-linux-gnu' }}
-              run: |
-                  sudo apt-get update -y
-                  sudo apt-get install -y gcc-aarch64-linux-gnu
-                  echo "CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_LINKER=aarch64-linux-gnu-gcc" >> $GITHUB_ENV
+            # - name: Linux ARM setup
+            #   if: ${{ matrix.job.target == 'aarch64-unknown-linux-gnu' }}
+            #   run: |
+            #       sudo apt-get update -y
+            #       sudo apt-get install -y gcc-aarch64-linux-gnu
+            #       echo "CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_LINKER=aarch64-linux-gnu-gcc" >> $GITHUB_ENV
 
             # - name: Build binaries
             #   uses: actions-rs/cargo@v1
@@ -187,24 +187,24 @@ jobs:
                   tag_name: ${{ needs.prepare.outputs.tag_name }}
                   prerelease: ${{ env.IS_NIGHTLY }}
                   body: ${{ needs.prepare.outputs.changelog }}
-                  files: |
-                      ${{ steps.artifacts.outputs.file_name }}
-                      ${{ steps.man.outputs.foundry_man }}
+                  # files: |
+                  #     ${{ steps.artifacts.outputs.file_name }}
+                  #     ${{ steps.man.outputs.foundry_man }}
 
             # If this is a nightly release, it also updates the release
             # tagged `nightly` for compatibility with `foundryup`
             # Not used post V1.
-            - name: Update nightly release
-              if: ${{ env.IS_NIGHTLY }}
-              uses: softprops/action-gh-release@v1
-              with:
-                  name: "Nightly"
-                  tag_name: "nightly"
-                  prerelease: true
-                  body: ${{ needs.prepare.outputs.changelog }}
-                  files: |
-                      ${{ steps.artifacts.outputs.file_name }}
-                      ${{ steps.man.outputs.foundry_man }}
+            # - name: Update nightly release
+            #   if: ${{ env.IS_NIGHTLY }}
+            #   uses: softprops/action-gh-release@v1
+            #   with:
+            #       name: "Nightly"
+            #       tag_name: "nightly"
+            #       prerelease: true
+            #       body: ${{ needs.prepare.outputs.changelog }}
+            #       files: |
+            #           ${{ steps.artifacts.outputs.file_name }}
+            #           ${{ steps.man.outputs.foundry_man }}
 
             # If any of the steps fail, this will create a high-priority issue
             # to signal so.
