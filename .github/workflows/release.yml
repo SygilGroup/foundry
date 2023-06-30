@@ -55,15 +55,15 @@ jobs:
                       const createTag = require('./.github/scripts/create-tag.js')
                       await createTag({ github, context }, process.env.TAG_NAME)
 
-            # - name: Build changelog
-            #   id: build_changelog
-            #   uses: mikepenz/release-changelog-builder-action@v2
-            #   with:
-            #       configuration: "./.github/changelog.json"
-            #       fromTag: ${{ env.IS_NIGHTLY && 'nightly' || '' }}
-            #       toTag: ${{ steps.release_info.outputs.tag_name }}
-            #   env:
-            #       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+            - name: Build changelog
+              id: build_changelog
+              uses: mikepenz/release-changelog-builder-action@v2
+              with:
+                  configuration: "./.github/changelog.json"
+                  fromTag: ${{ env.IS_NIGHTLY && 'nightly' || '' }}
+                  toTag: ${{ steps.release_info.outputs.tag_name }}
+              env:
+                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
     # Ignored
     # release-docker:
@@ -196,17 +196,17 @@ jobs:
             # If this is a nightly release, it also updates the release
             # tagged `nightly` for compatibility with `foundryup`
             # Not used post V1.
-            # - name: Update nightly release
-            #   if: ${{ env.IS_NIGHTLY }}
-            #   uses: softprops/action-gh-release@v1
-            #   with:
-            #       name: "Nightly"
-            #       tag_name: "nightly"
-            #       prerelease: true
-            #       body: ${{ needs.prepare.outputs.changelog }}
-            #       files: |
-            #           ${{ steps.artifacts.outputs.file_name }}
-            #           ${{ steps.man.outputs.foundry_man }}
+            - name: Update nightly release
+              if: ${{ env.IS_NIGHTLY }}
+              uses: softprops/action-gh-release@v1
+              with:
+                  name: "Nightly"
+                  tag_name: "nightly"
+                  prerelease: true
+                  body: ${{ needs.prepare.outputs.changelog }}
+                  # files: |
+                  #     ${{ steps.artifacts.outputs.file_name }}
+                  #     ${{ steps.man.outputs.foundry_man }}
 
             # If any of the steps fail, this will create a high-priority issue
             # to signal so.
