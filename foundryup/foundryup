@@ -85,15 +85,16 @@ main() {
       FOUNDRYUP_TAG_QUERY="nightly"
       FOUNDRYUP_VERSION=${FOUNDRYUP_VERSION:-nightly}
       FOUNDRYUP_TAG=$FOUNDRYUP_VERSION
-    else
-      FOUNDRYUP_TAG_QUERY="v1"
-      FOUNDRYUP_VERSION=${FOUNDRYUP_VERSION:-v1}
+    # The user has not specified neither the legacy flag, nor an specific version.
+    # Therefore we assume they want to install the latest foundry flag.
+    elif [[ -z "$FOUNDRYUP_VERSION" ]]; then
+      FOUNDRYUP_VERSION=${FOUNDRYUP_VERSION:-latest}
       FOUNDRYUP_TAG=$FOUNDRYUP_VERSION
     fi
 
-    # Normalize versions (handle channels, versions without v prefix
-    if [[ "$FOUNDRYUP_VERSION" == "v1" || "$FOUNDRYUP_VERSION" == "nightly" ]]; then
-      # Locate real v1 tag
+    # Normalize versions (handle channels, versions without v prefix)
+    if [[ "$FOUNDRYUP_VERSION" == "nightly" ]]; then
+      # Locate nightly tag
       SHA=$(ensure curl -sSf "https://api.github.com/repos/$FOUNDRYUP_REPO/git/refs/tags/$FOUNDRYUP_TAG_QUERY" \
         | grep -Eo '"sha"[^,]*' \
         | grep -Eo '[^:]*$' \
@@ -102,14 +103,23 @@ main() {
         | cut -d ':' -f2 )
       if [[ "$FOUNDRYUP_LEGACY" == true ]]; then
         FOUNDRYUP_TAG="nightly-${SHA}"
-      else
-        FOUNDRYUP_TAG="v1-${SHA}"
       fi
 
-    elif [[ "$FOUNDRYUP_VERSION" == v1* ]]; then
-      FOUNDRYUP_VERSION="v1"
-    elif [[ "$FOUNDRYUP_VERSION" == [[:digit:]]* ]]; then
+    elif [[ "$FOUNDRYUP_VERSION" == latest* ]]; then
+      # Locate latest v1 release
+      FOUNDRYUP_TAG=$(ensure curl -sSf "https://api.github.com/repos/$FOUNDRYUP_REPO/releases/latest" \
+        | grep -Eo '"tag_name"[^,]*' \
+        | grep -Eo '[^:]*$' \
+        | tr -d '"' \
+        | tr -d ' ' \
+        | cut -d ':' -f2 )
+    elif [[ "$FOUNDRYUP_VERSION" == "v"* ]]; then
       FOUNDRYUP_TAG="${FOUNDRYUP_VERSION}"
+    # Try to match an user inputting just the semver tag, without v
+    elif [[ "$FOUNDRYUP_VERSION" == [[:digit:]]* ]]; then
+      echo "MATCHED"
+      FOUNDRYUP_TAG="v${FOUNDRYUP_VERSION}"
+      FOUNDRYUP_VERSION="v${FOUNDRYUP_VERSION}"
     fi
 
     say "installing foundry (version ${FOUNDRYUP_VERSION}, tag ${FOUNDRYUP_TAG})"
@@ -148,8 +158,16 @@ main() {
 
     # Compute the URL of the release tarball in the Foundry repository.
     RELEASE_URL="https://github.com/${FOUNDRYUP_REPO}/releases/download/${FOUNDRYUP_TAG}/"
-    BIN_ARCHIVE_URL="${RELEASE_URL}foundry_${FOUNDRYUP_VERSION}_${PLATFORM}_${ARCHITECTURE}.$EXT"
-    MAN_TARBALL_URL="${RELEASE_URL}foundry_man_${FOUNDRYUP_VERSION}.tar.gz"
+    if [[ "$FOUNDRYUP_VERSION" == "nightly" ]]; then
+      BIN_ARCHIVE_URL="${RELEASE_URL}foundry_${FOUNDRYUP_VERSION}_${PLATFORM}_${ARCHITECTURE}.$EXT"
+      MAN_TARBALL_URL="${RELEASE_URL}foundry_man_${FOUNDRYUP_VERSION}.tar.gz"
+    elif [[ "$FOUNDRYUP_VERSION" == "latest" || "$FOUNDRYUP_VERSION" == "v"* ]]; then
+      BIN_ARCHIVE_URL="${RELEASE_URL}foundry_${FOUNDRYUP_TAG}_${PLATFORM}_${ARCHITECTURE}.$EXT"
+      MAN_TARBALL_URL="${RELEASE_URL}foundry_man_${FOUNDRYUP_TAG}.tar.gz"
+    fi
+    echo $RELEASE_URL
+    echo $BIN_ARCHIVE_URL
+    echo $MAN_TARBALL_URL
 
     # Download and extract the binaries archive
     say "downloading latest forge, cast, anvil, and chisel"
